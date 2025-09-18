@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Dropdown from "@/component/drop-down";
+import Image from "next/image";
+import { act, useEffect, useMemo, useRef, useState } from "react";
 
 type L2Level = [number, number];
 
@@ -64,12 +66,12 @@ function Row({ price, size, total, max, side }: { price: number; size: number; t
         <div className="relative h-7 text-xs font-mono">
             <div
                 className={
-                    "absolute inset-y-0 " + (side === "bid" ? "right-0 bg-green-500/15" : "left-0 bg-red-500/15")
+                    "absolute inset-y-0 " + (side === "bid" ? "right-0 bg-[#1FA67D1A]" : "right-0 bg-[#ED70881A]")
                 }
                 style={{ width: `${widthPct}%` }}
             />
-            <div className="relative z-10 grid grid-cols-[1fr_1fr_1fr] items-center px-2 h-full">
-                <span className={(side === "bid" ? "text-green-400" : "text-red-400") + " tabular-nums"}>{formatNumber(price, 2)}</span>
+            <div className="relative z-10 grid grid-cols-[1fr_1fr_1fr] items-center px-2 h-full text-[12px]">
+                <span className={(side === "bid" ? "text-[#1FA67D]" : "text-[#ED7088]") + " tabular-nums"}>{formatNumber(price, 2)}</span>
                 <span className="text-foreground/80 tabular-nums text-right">{formatNumber(size, 4)}</span>
                 <span className="text-foreground/90 tabular-nums text-right">{formatNumber(total, 4)}</span>
             </div>
@@ -182,36 +184,55 @@ export default function OrderBookPage() {
 	}, [asks]);
 
 	return (
-		<div className="min-h-screen w-full flex flex-col items-center px-4 py-6 gap-6">
+		<div className="min-h-screen w-full flex flex-col items-center px-4 py-6 gap-6 bg-[#1A1A1A]">
 			<div className="w-full max-w-5xl flex items-center justify-between">
 				<h1 className="text-xl font-semibold">Order Book</h1>
 			</div>
 
-			<div className="w-full max-w-[400px] grid grid-cols-1">
-				<div className="flex border-b border-white/10">
+			<div className="w-full max-w-[280px] grid grid-cols-1">
+				<div className="flex border-b border-white/10 px-2">
 					<button
 						className={`flex-1 px-3 text-sm `}
 						onClick={() => setActiveTab("orders")}
 					>
-						<div className={`mx-16 py-2 ${activeTab === "orders" ? "border-b-2 border-foreground" : "text-foreground/70"}`}>
-							Orders
+						<div className={`py-2 relative ${activeTab === "orders" ? "" : "text-foreground/70"}`}>
+							Order Book
+							{activeTab === 'orders' && <div className="absolute bottom-0 left-[50%] -translate-x-[50%] w-6 h-[3px] bg-white"></div>}
 						</div>
 					</button>
 					<button
 						className={`flex-1 px-3 text-sm `}
 						onClick={() => setActiveTab("trades")}
 					>
-						<div className={`mx-16 py-2 ${activeTab === "trades" ? "border-b-2 border-foreground" : "text-foreground/70"}`}>
+						<div className={`py-2 relative ${activeTab === "trades" ? "" : "text-foreground/70"}`}>
 							Trades
+							{activeTab === 'trades' && <div className="absolute bottom-0 left-[50%] -translate-x-[50%] w-6 h-[3px] bg-white"></div>}
 						</div>
+					</button>
+					<button>
+						<Image
+							src='/3dot.svg'
+							width={6}
+							height={6}
+							alt="dot"
+						/>
 					</button>
 				</div>
 
 				{activeTab === "orders" && (
 					<div className="grid grid-cols-1 gap-6">
 						<div className="overflow-hidden">
-							<div className="flex items-center justify-end p-2">
-								<select
+							<div className="flex items-center justify-between p-2">
+								<Dropdown 
+									options={[]}
+									selected="0.001"
+								/>
+								<Dropdown 
+									options={["BTC", "ETH", "SOL", "LINK", "ARB"]}
+									selected={coin}
+									setSelected={setCoin}
+								/>
+								{/* <select
 									className="h-9 rounded-md bg-white/5 border border-white/10 px-3 text-sm"
 									value={coin}
 									onChange={(e) => setCoin(e.target.value)}
@@ -221,9 +242,9 @@ export default function OrderBookPage() {
 											{c}
 										</option>
 									))}
-								</select>
+								</select> */}
 							</div>
-							<div className="grid grid-cols-[1fr_1fr_1fr] px-2 py-1 text-[10px] text-foreground/60">
+							<div className="grid grid-cols-[1fr_1fr_1fr] px-2 py-1 text-[12px] text-foreground/60 font-inter">
 								<div>Price (USD)</div>
 								<div className="text-right">Size ({coin})</div>
 								<div className="text-right">Total ({coin})</div>
@@ -233,7 +254,7 @@ export default function OrderBookPage() {
 									<Row key={`a-${p}`} price={p} size={s} total={t} max={maxAsk} side="ask" />
 								))}
 							</div>
-							<div className="text-left p-2 text-green-400 tabular-nums text-lg font-bold">
+							<div className="text-left p-2 text-[18px] text-[#1FA67D] font-medium">
 								{(bidsCum.slice(0, WINDOW_SIZE).reduce((acc, { p}) => acc + p, 0)) / WINDOW_SIZE}
 							</div>
 							<div className="divide-y divide-white/5">
