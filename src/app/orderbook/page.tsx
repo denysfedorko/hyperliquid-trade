@@ -45,14 +45,13 @@ function calcMaxSize(levels: L2Level[]) {
 }
 
 function normalizeBook(input: RestBookResponse | WsBookMessage): { bids: L2Level[]; asks: L2Level[] } | null {
-	// REST shape: { levels: [bids[], asks[]] } with strings
 	if ((input as RestBookResponse).levels) {
 		const [bRaw, aRaw] = (input as RestBookResponse).levels;
 		const bids: L2Level[] = bRaw.map((l) => [Number(l.px), Number(l.sz)]);
 		const asks: L2Level[] = aRaw.map((l) => [Number(l.px), Number(l.sz)]);
 		return { bids, asks };
 	}
-	// Some WS payloads may already provide numeric arrays
+
 	if ((input as any).bids && (input as any).asks) {
 		return { bids: (input as any).bids as L2Level[], asks: (input as any).asks as L2Level[] };
 	}
@@ -85,7 +84,6 @@ export default function OrderBookPage() {
 	const [activeTab, setActiveTab] = useState<"orders" | "trades">("orders");
 	const wsRef = useRef<WebSocket | null>(null);
 
-	// Snapshot fetch on coin change for fast first paint
 	useEffect(() => {
 		let aborted = false;
 		(async () => {
@@ -131,9 +129,21 @@ export default function OrderBookPage() {
 		};
 		ws.onmessage = (ev) => {
 			try {
-				const msg = JSON.parse(ev.data as string) as WsBookMessage;
-				if ((msg as any).type === "l2Book" && (msg as any).coin === coin) {
-					const norm = normalizeBook(msg);
+				const msg = JSON.parse(ev.data as string);
+				if ((msg as any).channel === "l2Book") {
+					const data = (msg as any).data as { coin?: string; levels?: { px: string; sz: string }[][] };
+					if (data?.levels) {
+						if (!data.coin || data.coin === coin) {
+							const [bRaw, aRaw] = data.levels;
+							const nextBids: L2Level[] = bRaw.map((l: any) => [Number(l.px), Number(l.sz)]);
+							const nextAsks: L2Level[] = aRaw.map((l: any) => [Number(l.px), Number(l.sz)]);
+							setBids(nextBids);
+							setAsks(nextAsks);
+						}
+						return;
+					}
+
+					const norm = normalizeBook(msg as any);
 					if (norm) {
 						setBids(norm.bids);
 						setAsks(norm.asks);
@@ -142,7 +152,6 @@ export default function OrderBookPage() {
 			} catch {}
 		};
 		ws.onerror = () => {
-			// best-effort; rely on effect re-run on coin change
 		};
 		return () => {
 			try {
