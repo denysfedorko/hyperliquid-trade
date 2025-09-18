@@ -27,6 +27,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="p-4 flex gap-4 text-sm">
+          <a className="underline" href="/">Home</a>
+          <a className="underline" href="/orderbook">Order Book</a>
+          <a className="underline" href="/trades">Trades</a>
+        </div>
         {children}
       </body>
     </html>
